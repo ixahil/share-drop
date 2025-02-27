@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+📂 ShareDrop - Peer-to-Peer File & Message Sharing
+==================================================
 
-## Getting Started
+### Live Demo: 🔗 Visit ShareDrop _(Replace with actual URL)_
 
-First, run the development server:
+ShareDrop is a real-time **peer-to-peer (P2P) file and message-sharing app** built with modern web technologies. It allows users to join a session, exchange files and messages, and collaborate without a central server.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+🚀 Features
+-----------
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+*   ✅ **Instant Session Creation** - Hosts can create sessions and invite peers via QR code or session ID.
+    
+*   ✅ **Peer Management** - Hosts can accept or decline new peers.
+    
+*   ✅ **Real-time Messaging** - Chat with other peers in the session.
+    
+*   ✅ **Fast File Transfer** - Uses **WebRTC** for direct peer-to-peer file sharing.
+    
+*   ✅ **Fallback Mechanism** - If WebRTC fails, files are relayed through **Pusher Channels**.
+    
+*   ✅ **No Database Required** - State is managed using **Pusher Presence Channels**.
+    
+*   ✅ **Secure & Private** - Files are transferred directly between peers, ensuring privacy.
+    
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+🛠️ Tech Stack
+--------------
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+*   **Frontend**: [Next.js](https://nextjs.org/), [React](https://react.dev/), [TypeScript](https://www.typescriptlang.org/)
+    
+*   **Real-time Communication**: [Pusher](https://pusher.com/)
+    
+*   **P2P File Sharing**: [WebRTC](https://webrtc.org/)
+    
+*   **UI Components**: Tailwind CSS, React Icons
+    
+*   **QR Code Generation**: qrcode.react
+    
 
-## Learn More
+🎮 How It Works
+---------------
 
-To learn more about Next.js, take a look at the following resources:
+1.  The **host** creates a session.
+    
+2.  Peers **join via QR code or session ID**.
+    
+3.  The host **accepts or declines** new peers.
+    
+4.  Users can **send messages and files** in real-time.
+    
+5.  Files are transferred via **WebRTC** (or Pusher as a fallback).
+    
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+🏗️ Installation & Setup
+------------------------
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### **1️⃣ Clone the Repository**
 
-## Deploy on Vercel
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   git clone https://github.com/yourusername/share-drop.git  cd share-drop   `
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### **2️⃣ Install Dependencies**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   yarn install  # or npm install   `
+
+### **3️⃣ Configure Environment Variables**
+
+Create a .env.local file and add the required keys:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   NEXT_PUBLIC_PUSHER_APP_ID=your_pusher_app_id  NEXT_PUBLIC_PUSHER_PUBLISHABLE_KEY=your_pusher_key  PUSHER_SECRET_KEY=your_pusher_secret  NEXT_PUBLIC_PUSHER_CLUSTER=your_pusher_cluster   `
+
+### **4️⃣ Run the App**
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   yarn dev  # or npm run dev   `
+
+The app should now be running at **http://localhost:3000** 🚀
+
+📸 Screenshots _(Optional)_
+---------------------------
+
+Include images of the interface (QR Code scanning, file transfer, etc.)
+
+🤝 Contributing
+---------------
+
+We welcome contributions! Feel free to open an issue or submit a pull request.
+
+📜 License
+----------
+
+MIT License © 2025 \[Your Name / Company\]
