@@ -10,7 +10,7 @@ const TablePage = () => {
   return (
     <div className="container grid grid-cols-1 lg:grid-cols-6 gap-8 py-16 mx-auto h-full max-h-screen">
       {/* Left Section - Active Peers & Podcast */}
-      <div className="lg:col-span-3 flex flex-col gap-8 h-full">
+      <div className="lg:col-span-3 flex flex-col gap-8 h-full py-32 justify-between">
         {/* Active Peers */}
         <div className="flex flex-wrap gap-12 justify-center bg-white p-6">
           <ActivePeers />
