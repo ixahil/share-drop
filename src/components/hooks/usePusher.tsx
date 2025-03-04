@@ -1,5 +1,6 @@
 "use client";
 import { pusherClient } from "@/lib/pusher";
+import { Peer, TableSession } from "@/types";
 
 export const usePusher = (slug: string) => {
   function subscribeToEvent<T>(event: string, handler: (data: T) => void) {

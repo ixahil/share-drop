@@ -1,7 +1,5 @@
 "use client";
 import { sendMessageAction } from "@/app/action";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { pusherClient } from "@/lib/pusher";
 import { useStore } from "@/lib/store";

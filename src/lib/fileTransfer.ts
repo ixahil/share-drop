@@ -1,5 +1,3 @@
-import { sendMessageAction } from "@/app/action";
-
 // 1️⃣ Send file over WebRTC
 export const sendFileOverWebRTC = (file: File, dataChannel: RTCDataChannel) => {
   console.log("Sending file via WebRTC...");
@@ -22,7 +20,7 @@ export const sendFileOverWebRTC = (file: File, dataChannel: RTCDataChannel) => {
 };
 
 // 2️⃣ Send file via server (fallback)
-export const sendFileToServer = async (file: File, tableSlug: string) => {
+export const sendFileToServer = async () => {
   console.log("DataChannel not open, sending file via server...");
-  await sendMessageAction(tableSlug, { file });
+  // await sendMessageAction(tableSlug, { file });
 };

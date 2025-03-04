@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export const ActivePeers = () => {
-  const { user, table, peerConnection } = useStore();
+  const { user, table } = useStore();
   const [peers, setPeers] = useState(table.activePeers || []);
 
   const { tableJoinResponse } = usePusher(table.slug);

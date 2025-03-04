@@ -19,11 +19,13 @@ export const WaitingComponent = () => {
   useEffect(() => {
     async function joinTable() {
       if (slug && name) {
-        await joinTableAction({
-          tableSlug: slug,
-          peer: name,
-          device: getUserAgent()!,
-        });
+        const formData = new FormData();
+
+        formData.append("table", slug);
+        formData.append("peer", name);
+        formData.append("device", getUserAgent());
+
+        await joinTableAction(null, formData);
       }
     }
     joinTable();

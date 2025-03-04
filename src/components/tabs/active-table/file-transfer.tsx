@@ -1,11 +1,11 @@
 "use client";
-import { useStore } from "@/lib/store";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { sendFileOverWebRTC, sendFileToServer } from "@/lib/fileTransfer";
+import { Label } from "@/components/ui/label";
+import { sendFileOverWebRTC } from "@/lib/fileTransfer";
+import { useStore } from "@/lib/store";
 
 const FileTransfer = () => {
-  const { dataChannel, table } = useStore();
+  const { dataChannel } = useStore();
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -14,7 +14,7 @@ const FileTransfer = () => {
     if (dataChannel?.readyState === "open") {
       sendFileOverWebRTC(file, dataChannel);
     } else {
-      await sendFileToServer(file, table.slug);
+      // await sendFileToServer(file, table.slug);
     }
   };
 

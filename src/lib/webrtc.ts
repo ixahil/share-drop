@@ -1,14 +1,13 @@
 import { useStore } from "@/lib/store";
 import Peer from "simple-peer";
 import { pusherClient } from "./pusher";
-import { toast } from "sonner";
 
 // Store active peers
 const peers = new Map<string, Peer.Instance>();
 let peer;
 
 export const startPeerConnection = (peerId: string, isinitiator: boolean) => {
-  // const channel = pusherClient.channel(`presence-table-${table.slug}`);
+  const channel = pusherClient.channel(`presence-table-test`);
   peer = new Peer({
     initiator: isinitiator,
     trickle: false,
@@ -52,56 +51,59 @@ export const listenForWebRTCOffer = () => {
 
   pusherClient
     .channel(`presence-table-${table.slug}`)
-    .bind("client-webrtc-offer", ({ peerId, offer }) => {
-      console.log("in Listen for WebRTC", peerId, offer);
-      const peer = new Peer({ initiator: false, trickle: false });
-      peers.set(peerId, peer);
+    .bind(
+      "client-webrtc-offer",
+      ({ peerId, offer }: { peerId: unknown; offer: unknown }) => {
+        console.log("in Listen for WebRTC", peerId, offer);
+        const peer = new Peer({ initiator: false, trickle: false });
+        // peers.set(peerId, peer);
 
-      peer.signal(offer);
+        // peer.signal(offer);
 
-      peer.on("signal", (answer) => {
-        pusherClient
-          .channel(`presence-table-${table.slug}`)
-          .trigger("client-webrtc-answer", { peerId, answer });
-      });
+        peer.on("signal", (answer) => {
+          pusherClient
+            .channel(`presence-table-${table.slug}`)
+            .trigger("client-webrtc-answer", { peerId, answer });
+        });
 
-      peer.on("icecandidate", (candidate) => {
-        pusherClient
-          .channel(`presence-table-${table.slug}`)
-          .trigger("client-webrtc-ice", { peerId, candidate });
-      });
+        peer.on("icecandidate", (candidate) => {
+          pusherClient
+            .channel(`presence-table-${table.slug}`)
+            .trigger("client-webrtc-ice", { peerId, candidate });
+        });
 
-      peer.addListener("connectionstatechange", () => {
-        console.log("WebRTC State:", peer.connected);
-      });
-    });
+        peer.addListener("connectionstatechange", () => {
+          console.log("WebRTC State:", peer.connected);
+        });
+      }
+    );
 };
 
 // 📌 Exchange ICE Candidates
 export const listenForICECandidates = () => {
-  const { table } = useStore.getState();
+  // const { table } = useStore.getState();
   console.log("in listen for Ice");
 
-  pusherClient
-    .channel(`presence-table-${table.slug}`)
-    .bind("client-webrtc-ice", ({ peerId, candidate }) => {
-      const peer = peers.get(peerId);
-      if (peer) peer.signal(candidate);
-    });
+  // pusherClient
+  //   .channel(`presence-table-${table.slug}`)
+  //   .bind("client-webrtc-ice", ({ peerId, candidate }) => {
+  //     const peer = peers.get(peerId);
+  //     if (peer) peer.signal(candidate);
+  //   });
 };
 
-const sendFile = (peerId: string, file: File) => {
-  const peer = peers.get(peerId);
-  if (!peer) return;
+// const sendFile = (peerId: string, file: File) => {
+//   const peer = peers.get(peerId);
+//   if (!peer) return;
 
-  const reader = new FileReader();
-  reader.readAsArrayBuffer(file);
+//   const reader = new FileReader();
+//   reader.readAsArrayBuffer(file);
 
-  reader.onload = () => {
-    peer.send(reader.result);
-    toast.success("File sent successfully!");
-  };
-};
+//   reader.onload = () => {
+//     peer.send(reader.result);
+//     toast.success("File sent successfully!");
+//   };
+// };
 
 // export const startWebRTCConnection2 = async (peerId: string) => {
 //   const { peerConnection, table, setDataChannel } = useStore.getState();
