@@ -222,10 +222,10 @@ export const sendMessageAction = async (
   tableSlug: string,
   message: Message
 ) => {
-  console.log(message);
-  // await pusherServer.trigger(
-  //   `presence-table-${tableSlug}`,
-  //   "table:chat-messages",
-  //   message
-  // );
+  // console.log(message);
+  await pusherServer.trigger(
+    `presence-table-${tableSlug}`,
+    "table:chat-messages",
+    message
+  );
 };
