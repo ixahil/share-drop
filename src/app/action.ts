@@ -1,179 +1,212 @@
 "use server";
-import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
-import { Device, Role, Table, User } from "@prisma/client";
+import {
+  Device,
+  Message,
+  Peer,
+  Role,
+  TableActionReturn,
+  TableSession,
+} from "@/types";
+import { Redis } from "@upstash/redis";
+import { randomUUID } from "crypto";
+import { redirect } from "next/navigation";
 import slugify from "slugify";
 import zod from "zod";
 
+const redis = Redis.fromEnv();
+
 const TableCreateSchema = zod.object({
-  name: zod.string(),
+  table: zod.string(),
   host: zod.string(),
+  device: zod.nativeEnum(Device),
 });
 
-interface TablWithAll extends Table {
-  host: User;
-  activePeers: User[];
-  pendingPeers: User[];
-}
+const TableJoinSchema = zod.object({
+  table: zod.string(),
+  peer: zod.string(),
+  device: zod.nativeEnum(Device),
+});
+
+type TableError = {
+  host?: string;
+  table: string;
+  peer?: string;
+};
 
 export const createTableAction = async (
-  formData: FormData,
-  device: Device
-): Promise<TableActionReturn<TablWithAll>> => {
+  prevState: unknown,
+  formData: FormData
+): Promise<TableActionReturn<TableSession, TableError>> => {
   const { success, data } = TableCreateSchema.safeParse(
     Object.fromEntries(formData)
   );
+
+  console.log(Object.fromEntries(formData));
+
+  const prevData = {
+    host: data?.host || "",
+    table: data?.table || "",
+  };
 
   if (!success) {
     return {
       error: "Validation Error",
       data: null,
       success: false,
+      prevData: prevData,
     };
   }
 
-  const slug = slugify(data.name, { lower: true });
+  const slug = slugify(data.table, { lower: true });
 
   const password = Math.random()
     .toString(8)
     .replace(/[^a-z]+/g, "");
 
-  const host = await prisma.user.create({
-    data: {
+  const table: TableSession = {
+    id: randomUUID(),
+    name: data.table,
+    password: password,
+    slug: slug,
+    host: {
+      id: randomUUID(),
+      device: data.device,
       name: data.host,
       role: Role.HOST,
-      device: device,
     },
-  });
+    activePeers: [],
+    pendingPeers: [],
+  };
 
-  const table = await prisma.table.create({
-    data: {
-      name: data.name,
-      password: password,
-      slug: slug,
-      host: { connect: { id: host.id } },
-    },
-    include: {
-      host: true,
-      activePeers: true,
-      pendingPeers: true,
-    },
-  });
-
-  // await pusherServer.trigger("presence-table-list", "table:created", table);
-
-  // // redirect("/table/" + table.slug);
+  await redis.set(`table:${table.slug}`, table, { ex: 10800 });
 
   return {
     error: null,
     data: table,
     success: true,
+    prevData: prevData,
   };
 };
 
-export const joinTableAction = async (data: {
-  tableSlug: string;
-  peer: string;
-  device: Device;
-}): Promise<TableActionReturn<User>> => {
-  if (!data.tableSlug || !data.peer) {
+export const joinTableAction = async (
+  prevState: unknown,
+  formData: FormData
+): Promise<
+  TableActionReturn<{ peer: Peer; table: TableSession }, TableError>
+> => {
+  const { success, data } = TableJoinSchema.safeParse(
+    Object.fromEntries(formData)
+  );
+  const prevData = {
+    peer: data?.peer || "",
+    table: data?.table || "",
+  };
+
+  if (!success) {
     return {
       error: "Validation Error",
       data: null,
       success: false,
+      prevData: prevData,
     };
   }
-  const existingTable = await prisma.table.findFirst({
-    where: {
-      slug: data.tableSlug,
-    },
-  });
+
+  const tableSlug = slugify(data.table, { lower: true });
+
+  const existingTable: TableSession | null = await redis.get(
+    `table:${tableSlug}`
+  );
 
   if (!existingTable) {
     return {
       error: "Table not exist",
       data: null,
       success: false,
+      prevData: prevData,
     };
   }
 
-  const peer = await prisma.user.create({
-    data: {
-      name: data.peer,
-      role: "PEER",
-      requestedTables: { connect: [{ slug: data.tableSlug }] },
-      device: data.device,
-    },
-  });
+  const newPeer: Peer = {
+    device: data.device,
+    id: randomUUID(),
+    name: data.peer,
+    role: Role.PEER,
+  };
+
+  existingTable.pendingPeers.push(newPeer);
+
+  await redis.set(`table:${existingTable.slug}`, existingTable, { ex: 10800 });
 
   pusherServer.trigger(
-    `presence-table-${data.tableSlug}`,
+    `presence-table-${existingTable.slug}`,
     "table:join_request",
-    peer
+    newPeer as Peer
   );
 
   return {
     error: null,
-    data: peer,
+    data: { peer: newPeer, table: existingTable },
     success: true,
+    prevData: prevData,
   };
 };
 
-export const getTableBySlug = async (slug: string) => {
-  return await prisma.table.findFirst({
-    where: { slug },
-    include: {
-      pendingPeers: true,
-      activePeers: true,
-      host: true,
-      messages: { include: { user: true, table: true } },
-    },
-  });
+export const getTableBySlug = async (
+  slug: string
+): Promise<TableSession | null> => {
+  if (!slug) {
+    redirect("/");
+    return null;
+  }
+
+  const table = await redis.get<TableSession>(`table:${slug}`);
+
+  return table;
 };
 
 export const updatePendingPeers = async (
   table: TableSession,
-  peer: User,
+  peer: Peer,
   status: string
 ) => {
+  const existingTable = await redis.get<TableSession>(`table:${table.slug}`);
+
+  if (!existingTable) {
+    return { error: "Table not found", accepted: false, peer };
+  }
+
+  existingTable.pendingPeers = existingTable.pendingPeers.filter(
+    (p) => p.id !== peer.id
+  );
+
   if (status === "APPROVE") {
-    await prisma.table.update({
-      where: {
-        id: table.id,
-      },
-      data: {
-        pendingPeers: { disconnect: [{ id: peer.id }] },
-        activePeers: { connect: [{ id: peer.id }] },
-      },
-    });
+    existingTable?.activePeers.push(peer);
+
+    await redis.set(`table:${table.slug}`, existingTable, { ex: 10800 });
 
     await pusherServer.trigger(
       `presence-table-${table.slug}`,
       "table:join_response",
       {
         accepted: true,
+        table: existingTable,
         peer: peer,
       }
     );
     return {
-      accepted: false,
+      accepted: true,
       peer: peer,
     };
   } else {
-    await prisma.table.update({
-      where: {
-        id: table.id,
-      },
-      data: {
-        pendingPeers: { disconnect: [{ id: peer.id }] },
-      },
-    });
+    await redis.set(`table:${table.slug}`, existingTable, { ex: 10800 });
 
     await pusherServer.trigger(
       `presence-table-${table.slug}`,
       "table:join_response",
       {
         accepted: false,
+        table: existingTable,
         peer: peer,
       }
     );
@@ -186,35 +219,13 @@ export const updatePendingPeers = async (
 };
 
 export const sendMessageAction = async (
-  userId: number,
-  tableId: number,
-  message: string
+  tableSlug: string,
+  message: Message
 ) => {
-  const createdMessage = await prisma.message.create({
-    data: {
-      message: message,
-      user: {
-        connect: {
-          id: userId,
-        },
-      },
-      table: {
-        connect: {
-          id: tableId,
-        },
-      },
-    },
-    include: {
-      table: true,
-      user: true,
-    },
-  });
-
-  if (createdMessage) {
-    pusherServer.trigger(
-      `presence-table-${createdMessage.table.slug}`,
-      "chat:new_message",
-      createdMessage
-    );
-  }
+  console.log(message);
+  // await pusherServer.trigger(
+  //   `presence-table-${tableSlug}`,
+  //   "table:chat-messages",
+  //   message
+  // );
 };

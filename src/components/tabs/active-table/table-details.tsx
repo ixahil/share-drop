@@ -1,22 +1,19 @@
 "use client";
 
+import { useStore } from "@/lib/store";
 import { getSlug } from "@/lib/utils";
 import QRCode from "react-qr-code";
-import { TableWithAll } from "./pending-peers";
 
-type Props = {
-  table: TableWithAll;
-};
-
-const TableDetails = ({ table }: Props) => {
+const TableDetails = () => {
   const peerName = getSlug("people");
+  const { table } = useStore();
 
   const baseUrl =
     typeof window !== "undefined"
       ? window.location.origin
       : process.env.NEXT_PUBLIC_WEBSITEURL || "https://localhost:3000";
 
-  const qrValue = `${baseUrl}/table/waiting?slug=${table.slug}&name=${peerName}`;
+  const qrValue = `${baseUrl}/waiting?slug=${table.slug}&name=${peerName}`;
 
   return (
     <div className="space-y-4">

@@ -1,7 +1,7 @@
-import React from "react";
-import { Label } from "./label";
-import { Input } from "./input";
 import { cn } from "@/lib/utils";
+import React from "react";
+import { Input } from "./input";
+import { Label } from "./label";
 
 type Props = {
   name: string;
@@ -10,6 +10,7 @@ type Props = {
   error?: string;
   id: string;
   disabled?: boolean;
+  hidden?: boolean;
 };
 
 export const InputWithLabel = ({

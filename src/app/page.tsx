@@ -1,135 +1,65 @@
-"use client";
-import { InputWithLabel } from "@/components/ui/input-with-label";
-import { LoadingButton } from "@/components/ui/loading-button";
-import { getSlug, getUserAgent } from "@/lib/utils";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { createTableAction, joinTableAction } from "./action";
-import slugify from "slugify";
-import { pusherClient } from "@/lib/pusher";
-import { Device } from "@prisma/client";
+import React from "react";
+import Link from "next/link";
+import { TypewriterEffectSmooth } from "@/components/ui/typewriter-effect";
+import { GithubIcon } from "lucide-react";
+import { BackgroundBeams } from "@/components/ui/bg-beams";
+import { SparklesCore } from "@/components/ui/sparkles-core";
+import { EyeCatchingButton_v1 } from "@/components/ui/shimmer-button";
+import { SiteFooter } from "@/components/footer";
 
-export default function Home() {
-  const [isCreating, setIsCreating] = useState(false);
-  const [isJoining, setIsJoining] = useState(false);
-  const [peerTableSlug, setPeerTableSlug] = useState<string>("");
-  const router = useRouter();
-  const peer_slug = getSlug("people");
-  const table_slug = getSlug("place");
+const words = [
+  {
+    text: "Share",
+  },
+  {
+    text: "files",
+  },
+  {
+    text: "blazingly",
+  },
+  {
+    text: "fast",
+  },
+  {
+    text: "using",
+  },
+  {
+    text: "SharePro.",
+    className: "underline text-blue-500 dark:text-blue-500",
+  },
+];
 
-  async function handleCreate(formData: FormData) {
-    setIsCreating(true);
-
-    const { success, data } = await createTableAction(
-      formData,
-      getUserAgent()!
-    );
-
-    if (success) {
-      router.push(`/table/${data?.slug}`);
-      localStorage.setItem(
-        "currentUser",
-        JSON.stringify({
-          id: data?.host.id,
-          name: peer_slug,
-          device: getUserAgent(),
-        })
-      );
-    } else {
-      toast.error("Failed to create table");
-    }
-
-    setIsCreating(false);
-  }
-
-  async function handleJoin(formData: FormData) {
-    const peer = {
-      tableSlug: slugify(formData.get("name") as string, { lower: true }),
-      peer: formData.get("peer") as string,
-      device: getUserAgent() as Device,
-    };
-
-    const { success, data } = await joinTableAction(peer);
-
-    if (!success) {
-      toast.error("Table not exist!");
-      return;
-    }
-
-    setPeerTableSlug(peer.tableSlug);
-
-    localStorage.setItem(
-      "currentUser",
-      JSON.stringify({
-        id: data?.id,
-        name: peer_slug,
-        device: getUserAgent(),
-      })
-    );
-
-    setIsJoining(true);
-  }
-
-  useEffect(() => {
-    function handleResponse(data: { accepted: boolean }) {
-      if (data.accepted) {
-        setIsJoining(false);
-        router.push(`/table/${peerTableSlug}`);
-      } else {
-        toast.error("Request Declined by host");
-        setIsJoining(false);
-      }
-    }
-
-    const channelName = `presence-table-${peerTableSlug}`;
-
-    const channel = pusherClient.subscribe(channelName);
-
-    channel.bind("table:join_response", handleResponse);
-
-    return () => {
-      channel.unbind("table:join_response", handleResponse);
-    };
-  }, [router, peerTableSlug]);
-
+const Home = () => {
   return (
-    <div className="container mx-auto my-16 flex gap-8">
-      <form action={handleCreate} className="space-y-4 w-full">
-        <InputWithLabel
-          name="host"
-          disabled={true}
-          label="Host Name"
-          id="host"
-          defaultValue={peer_slug}
-        />
-        <InputWithLabel
-          name="name"
-          disabled={true}
-          label="Table Name"
-          id="name"
-          defaultValue={table_slug}
-        />
-
-        <LoadingButton isLoading={isCreating}>Create Table</LoadingButton>
-      </form>
-      <form action={handleJoin} className="space-y-4 w-full">
-        <InputWithLabel
-          name="peer"
-          disabled={true}
-          label="Peer Name"
-          id="peer"
-          defaultValue={peer_slug}
-        />
-        <InputWithLabel name="name" label="Table Name" id="name" />
-
-        <LoadingButton isLoading={isJoining}>Join Table</LoadingButton>
-        {isJoining && (
-          <div className="text-secondary-foreground">
-            Please Wait for the host to accept your request
-          </div>
-        )}
-      </form>
+    <div className="flex flex-col items-center justify-center overflow-hidden h-[40rem]">
+      <BackgroundBeams className="hidden md:block" />
+      <SparklesCore
+        id="tsparticlesfullpage"
+        background="transparent"
+        minSize={0.6}
+        maxSize={1.4}
+        particleDensity={100}
+        className="absolute inset-0 z-0 block md:hidden"
+        particleColor={"#FFFFFF"}
+      />
+      <TypewriterEffectSmooth words={words} />A peer-to-peer file sharing app.
+      <div className="mt-8 gap-3 flex justify-center z-10">
+        <Link href="/share">
+          <EyeCatchingButton_v1>Start sharing</EyeCatchingButton_v1>
+        </Link>
+        <Link
+          href={"https://github.com/ixahil/share-drop"}
+          className="flex items-center"
+        >
+          <EyeCatchingButton_v1>
+            <GithubIcon size={18} className="mr-2" />
+            GitHub Repo
+          </EyeCatchingButton_v1>
+        </Link>
+      </div>
+      <SiteFooter />
     </div>
   );
-}
+};
+
+export default Home;

@@ -1,4 +1,4 @@
-import { Device } from "@prisma/client";
+import { Device } from "@/types";
 import { clsx, type ClassValue } from "clsx";
 import { generateSlug } from "random-word-slugs";
 import { isAndroid, isDesktop, isIOS } from "react-device-detect"; // Import from react-device-detect library [1, 2]
@@ -37,23 +37,25 @@ export const getSlug = (noun: noun) => {
   return slug;
 };
 
-export const getUserAgent = () => {
+export const getUserAgent = (): Device => {
   if (isAndroid) {
-    return "ANDROID";
+    return Device.ANDROID;
   }
   if (isIOS) {
-    return "IOS";
+    return Device.IOS;
   }
   if (isDesktop) {
-    return "COMPUTER";
+    return Device.COMPUTER;
+  } else {
+    return Device.COMPUTER;
   }
 };
 
 export const iconMap = (device: Device) => {
   switch (device) {
-    case "ANDROID":
+    case Device.ANDROID:
       return MdPhoneAndroid;
-    case "IOS":
+    case Device.ANDROID:
       return MdPhoneAndroid;
     default:
       return MdComputer;

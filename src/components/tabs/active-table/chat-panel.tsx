@@ -1,47 +1,54 @@
 "use client";
 import { sendMessageAction } from "@/app/action";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { pusherClient } from "@/lib/pusher";
-import { Message, Table, User } from "@prisma/client";
+import { useStore } from "@/lib/store";
+import { Message } from "@/types";
 import { useEffect, useState } from "react";
-import { TableWithAll } from "./pending-peers";
+import FileTransfer from "./file-transfer";
 
-interface MessageWithAll extends Message {
-  user: User;
-  table: Table;
-}
-
-type Props = {
-  table: TableWithAll;
-  existingMessages: MessageWithAll[];
-};
-
-const ChatPanel = ({ table, existingMessages }: Props) => {
-  const [messages, setMessages] = useState<MessageWithAll[] | []>(
-    existingMessages || []
-  );
+const ChatPanel = () => {
+  const [messages, setMessages] = useState<Message[] | []>([]);
   const [message, setMessage] = useState("");
-  const currentUser = localStorage.getItem("currentUser")
-    ? JSON.parse(localStorage.getItem("currentUser")!)
-    : null;
+  const [isSending, setIsSending] = useState(false);
+  const { user, table } = useStore();
 
   useEffect(() => {
     const channel = pusherClient.subscribe(`presence-table-${table.slug}`);
-
-    channel.bind("chat:new_message", (newMessage: MessageWithAll) => {
+    channel.bind("table:chat-messages", (newMessage: Message) => {
       setMessages((prev) => [...prev, newMessage]);
     });
 
+    // channel.bind("pusher:member_added", (data) => {
+    //   console.log(data);
+    // });
+
     return () => {
-      pusherClient.unsubscribe(`presence-table-${table.slug}`);
+      pusherClient.unsubscribe(`presence-table-${table?.slug}`);
     };
-  }, [table.slug]);
+  }, [table.slug, messages]);
 
   const sendMessage = async () => {
     if (!message.trim()) return;
+    setIsSending(true);
 
-    await sendMessageAction(currentUser.id, table.id, message);
+    const newMessage = {
+      userId: user?.id || "",
+      userName: user?.name || "",
+      text: message,
+    };
 
+    await sendMessageAction(table.slug, newMessage);
     setMessage("");
+    setIsSending(false);
+  };
+
+  const handleKeyDown = async (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      await sendMessage();
+    }
   };
 
   return (
@@ -52,18 +59,18 @@ const ChatPanel = ({ table, existingMessages }: Props) => {
           <div
             key={idx}
             className={`flex ${
-              msg.userId === currentUser.id ? "justify-start" : "justify-end"
+              msg?.userId === user?.id ? "justify-start" : "justify-end"
             }`}
           >
             <div
               className={`max-w-xs p-3 rounded-lg ${
-                msg.userId === currentUser.id
+                msg?.userId === user?.id
                   ? "bg-blue-500 text-white self-start"
                   : "bg-gray-200 self-end"
               }`}
             >
-              <p className="text-sm font-semibold">{msg.user.name}</p>
-              <p>{msg.message}</p>
+              <p className="text-sm font-semibold">{msg?.userName}</p>
+              <p>{msg?.text}</p>
             </div>
           </div>
         ))}
@@ -71,19 +78,22 @@ const ChatPanel = ({ table, existingMessages }: Props) => {
 
       {/* Input */}
       <div className="flex items-center gap-2 mt-2">
+        <FileTransfer />
         <input
           type="text"
           className="flex-1 p-2 border rounded-md"
           placeholder="Type your message..."
           value={message}
+          onKeyDown={handleKeyDown}
           onChange={(e) => setMessage(e.target.value)}
         />
-        <button
+        <LoadingButton
+          isLoading={isSending}
           onClick={sendMessage}
           className="bg-blue-500 text-white p-2 rounded-md"
         >
           Send
-        </button>
+        </LoadingButton>
       </div>
     </div>
   );

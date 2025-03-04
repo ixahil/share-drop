@@ -1,48 +1,32 @@
 "use client";
 
-import { Table, User } from "@prisma/client";
 import { useEffect, useState } from "react";
 import { MdAdd, MdDelete } from "react-icons/md";
-// import ApproveCancelButton from "./update-join";
 import { updatePendingPeers } from "@/app/action";
+import { usePusher } from "@/components/hooks/usePusher";
 import { LoadingButton } from "@/components/ui/loading-button";
-import { pusherClient } from "@/lib/pusher";
+import { useStore } from "@/lib/store";
 import { iconMap } from "@/lib/utils";
+import { Peer } from "@/types";
 
-export interface TableWithAll extends Table {
-  activePeers: User[];
-  pendingPeers: User[];
-  host: User;
-}
-
-type Props = {
-  table: TableWithAll;
-};
-
-export const PendingPeers = ({ table }: Props) => {
+export const PendingPeers = () => {
+  const { user, table } = useStore();
   const [peers, setPeers] = useState(table.pendingPeers || []);
-  const currentUser = localStorage.getItem("currentUser")
-    ? JSON.parse(localStorage.getItem("currentUser")!)
-    : null;
+
+  const { tableJoinRequest } = usePusher(table.slug);
 
   useEffect(() => {
-    function handleRequest(peer: User) {
+    function handleRequest(peer: Peer) {
+      console.log("in pending peer");
       setPeers((prev) => [...prev, peer]);
     }
 
-    const channelName = `presence-table-${table.slug}`;
-
-    const channel = pusherClient.subscribe(channelName);
-
-    channel.bind("table:join_request", handleRequest);
-
-    return () => {
-      channel.unbind("table:join_request", handleRequest);
-    };
-  }, [table]);
+    const cleanup = tableJoinRequest(handleRequest);
+    return cleanup;
+  }, [tableJoinRequest]);
 
   const pendingPeerAction = async (
-    peer: User,
+    peer: Peer,
     status: "APPROVE" | "DECLINE"
   ) => {
     const { accepted } = await updatePendingPeers(table, peer, status);
@@ -52,7 +36,7 @@ export const PendingPeers = ({ table }: Props) => {
     }
   };
 
-  if (currentUser?.id !== table.host.id) {
+  if (user?.id !== table.host.id) {
     return null;
   }
 
